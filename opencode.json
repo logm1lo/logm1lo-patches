@@ -1,0 +1,35 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "edit": "allow",
+    "bash": "allow"
+  },
+  "instructions": [
+    ".opencode/references/smali-cheat-sheet.md",
+    ".opencode/references/patch-anatomy.md",
+    ".opencode/references/fingerprinting.md",
+    ".opencode/references/community-patterns.md",
+    ".opencode/references/bypass-patterns.md",
+    ".opencode/references/patcher-api.md"
+  ],
+  "agent": {
+    "build": {
+      "model": "opencode/deepseek-v4-pro",
+      "permission": {
+        "edit": "allow",
+        "bash": {
+          "*": "allow",
+          "git push*": "ask",
+          "rm -rf *": "ask"
+        }
+      }
+    },
+    "plan": {
+      "model": "opencode/deepseek-v4-pro",
+      "permission": {
+        "edit": "ask",
+        "bash": "ask"
+      }
+    }
+  }
+}
