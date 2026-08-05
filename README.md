@@ -1,85 +1,66 @@
 # Logm1lo Patches
 
-Custom Morphe patches for Android apps.
+[![Release](https://github.com/logm1lo/logm1lo-patches/actions/workflows/release.yml/badge.svg)](https://github.com/logm1lo/logm1lo-patches/actions/workflows/release.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/GPL-3.0)
 
-**Add to Morphe Manager:** [morphe-patches.software/?github=logm1lo/logm1lo-patches](https://morphe-patches.software/?github=logm1lo/logm1lo-patches)
+Custom Morphe patches for Android apps. **Add to Morphe Manager:** [deeplink](https://morphe-patches.software/?github=logm1lo/logm1lo-patches)
+
+> App requests go to [Discussions](https://github.com/logm1lo/logm1lo-patches/discussions/categories/app-requests). Issues are for bugs and feature requests on existing supported apps.
 
 <!-- PATCHES_START -->
 > **[v1.0.10](https://github.com/logm1lo/logm1lo-patches/releases/tag/v1.0.10)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;1 patches total
 <details open>
-<summary>📦 Calistree&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
+<summary>Calistree&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
 <br>
 
-**🎯 Supported versions:**
+**Supported versions:**
 
 | 5.8.5 |
 | :---: |
 
-| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
-|----------|----------------|-----------|
+| Patch | Description | Options |
+|----------|------------------|-----------|
 | [Premium Unlock](#premium-unlock) | Unlocks all Calistree PRO features. |  |
 
 </details>
 
 <!-- PATCHES_END -->
 
-## Getting Started
-
-### Prerequisites
-- JDK 21+
-- Android SDK Platform Tools (adb)
-- GitHub PAT with `read:packages` scope
-
-### Setup
-```bash
-# Clone with dev branch
-git clone -b dev git@github.com:logm1lo/logm1lo-patches.git
-cd logm1lo-patches
-
-# Configure GitHub auth for package registry
-mkdir -p ~/.gradle
-cat >> ~/.gradle/gradle.properties << EOF
-gpr.user = YOUR_GITHUB_USERNAME
-gpr.key = YOUR_GITHUB_PAT
-EOF
-
-# Download morphe-cli.jar
-# From: https://github.com/MorpheApp/morphe-desktop/releases
-# Place in project root as morphe-cli.jar
-```
-
-### Build Patches
-```bash
-./gradlew :patches:buildAndroid
-```
-Output: `patches/build/libs/patches-<version>.mpp`
-
-### Decompile an APK
-```bash
-./scripts/decompile.sh com.example.app
-```
-
-### Build and Install Patched APK
-```bash
-./scripts/build-and-test.sh com.example.app both
-```
-
 ## FAQ
 
 **How do I use this?**
-Install Morphe Manager, add this repo as a source, select Calistree, and apply the Premium Unlock patch.
-
-**What version of Calistree does this work with?**
-5.8.5. Other versions may work but are not tested.
+Install [Morphe Manager](https://github.com/MorpheApp/morphe-desktop/releases), add this repo as a source, select Calistree, and apply the Premium Unlock patch.
 
 **Why can't I sign in after patching?**
-Re-signing the APK breaks Google Play Services auth. Sign in before patching your APK, or use email/password instead of Google sign-in.
+Re-signing the APK breaks Google Play Services auth. Sign in before patching, or use email/password instead of Google sign-in.
+
+**What version of Calistree does this work with?**
+5.8.5. Other versions may work but aren't tested.
 
 **Can you make a patch for another app?**
-Possibly. Submit a request in the [App Requests](https://github.com/logm1lo/logm1lo-patches/discussions/categories/app-requests) discussion area.
+Submit a request in the [App Requests](https://github.com/logm1lo/logm1lo-patches/discussions/categories/app-requests) discussion area.
 
-**The patch does not work.**
-Make sure you are using the correct APK version. If it still fails, open an issue with details.
+**The patch doesn't work.**
+Make sure you're using the correct APK version. If it still fails, [open an issue](https://github.com/logm1lo/logm1lo-patches/issues/new?template=bug_report.yml) with details.
+
+## Development
+
+**Prerequisites:** JDK 21+
+
+```bash
+git clone -b dev git@github.com:logm1lo/logm1lo-patches.git
+cd logm1lo-patches
+
+# GitHub package registry auth
+echo "gpr.user = YOUR_USERNAME" >> ~/.gradle/gradle.properties
+echo "gpr.key = YOUR_GITHUB_PAT" >> ~/.gradle/gradle.properties
+
+# Build
+./gradlew :patches:buildAndroid
+```
+
+Output: `patches/build/libs/patches-<version>.mpp`
 
 ## License
+
 GPL-3.0
