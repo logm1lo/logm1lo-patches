@@ -8,21 +8,11 @@ Custom Morphe patches for Android apps. **Add to Morphe Manager:** [deeplink](ht
 > App requests go to [Discussions](https://github.com/logm1lo/logm1lo-patches/discussions/categories/app-requests). Issues are for bugs and feature requests on existing supported apps.
 
 <!-- PATCHES_START -->
-> **[v1.0.10](https://github.com/logm1lo/logm1lo-patches/releases/tag/v1.0.10)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;1 patches total
-<details open>
-<summary>Calistree&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
-<br>
+> **[v1.0.10](https://github.com/logm1lo/logm1lo-patches/releases/tag/v1.0.10)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;1 patches total
 
-**Supported versions:**
-
-| 5.8.5 |
-| :---: |
-
-| Patch | Description | Options |
-|----------|------------------|-----------|
-| [Premium Unlock](#premium-unlock) | Unlocks all Calistree PRO features. |  |
-
-</details>
+| App | Package | Versions | Patches |
+|-----|---------|----------|---------|
+| Calistree | `com.calistree.calistree` | 5.8.5 | Premium Unlock |
 
 <!-- PATCHES_END -->
 
