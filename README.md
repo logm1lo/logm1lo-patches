@@ -54,5 +54,22 @@ Output: `patches/build/libs/patches-<version>.mpp`
 ./scripts/build-and-test.sh com.example.app both
 ```
 
+## FAQ
+
+**How do I use this?**
+Install Morphe Manager, add this repo as a source, select Calistree, and apply the Premium Unlock patch.
+
+**What version of Calistree does this work with?**
+5.8.5. Other versions may work but are not tested.
+
+**Why can't I sign in after patching?**
+Re-signing the APK breaks Google Play Services auth. Sign in before patching your APK, or use email/password instead of Google sign-in.
+
+**Can you make a patch for another app?**
+Possibly. Open an issue with the app name and version.
+
+**The patch does not work.**
+Make sure you are using the correct APK version. If it still fails, open an issue with details.
+
 ## License
 GPL-3.0
