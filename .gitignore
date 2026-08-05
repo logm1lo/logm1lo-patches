@@ -42,6 +42,10 @@ Morphe.keystore
 
 # Backup files
 *.bak
+*~
+
+# Logs
+*.log
 
 # Temporary
 /tmp/
