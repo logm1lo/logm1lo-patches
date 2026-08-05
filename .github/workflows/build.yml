@@ -1,6 +1,10 @@
 name: Build
 
-on: push
+on:
+  push:
+    branches-ignore:
+      - main
+  pull_request:
 
 jobs:
   build:
@@ -14,8 +18,3 @@ jobs:
           java-version: 21
 
       - run: ./gradlew :patches:buildAndroid
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: patches
-          path: patches/build/libs/patches-*.mpp
