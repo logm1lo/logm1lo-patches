@@ -45,5 +45,3 @@ body:
           required: true
         - label: All requested information has been provided properly.
           required: true
-
-<!-- Source: https://github.com/MorpheApp/morphe-patches-template/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml -->
