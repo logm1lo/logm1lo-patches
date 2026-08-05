@@ -45,11 +45,7 @@ private val FAKE_ENTITLEMENT_SMALI = """
 @Suppress("unused")
 val calistreePremiumPatch = bytecodePatch(
     name = "Premium Unlock",
-    description = "Unlocks all Calistree PRO features. Overrides 5 RevenueCat Java methods "
-            + "(getActive, getActiveSubscriptions, entitlements serializer, "
-            + "allPurchasedProductIds, CustomerInfoMapper). Paired with 10 Dart AOT hex "
-            + "patches in libapp.so for PRO state persistence, plan limit bypass, "
-            + "promotional gate removal, and restart-proof initial state.",
+    description = "Unlocks all Calistree PRO features.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_CALISTREE)
