@@ -14,7 +14,7 @@ fun main() {
         "patches" to listOf(
             mapOf(
                 "name" to "Premium Unlock",
-                "description" to "Unlocks all Calistree PRO features. Overrides 5 RevenueCat Java methods paired with 10 Dart AOT hex patches in libapp.so for PRO state persistence, plan limit bypass, promotional gate removal, and restart-proof initial state.",
+                "description" to "Unlocks all Calistree PRO features.",
                 "default" to true,
                 "dependencies" to emptyList<String>(),
                 "compatiblePackages" to listOf(
