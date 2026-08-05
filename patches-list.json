@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file.",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "patches": [
     {
       "name": "Premium Unlock",
-      "description": "Unlocks all Calistree PRO features. Overrides 5 RevenueCat Java methods paired with 10 Dart AOT hex patches in libapp.so for PRO state persistence, plan limit bypass, promotional gate removal, and restart-proof initial state.",
+      "description": "Unlocks all Calistree PRO features.",
       "default": true,
       "dependencies": [],
       "compatiblePackages": [
