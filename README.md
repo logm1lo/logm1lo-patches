@@ -5,7 +5,7 @@ Custom Morphe patches for Android apps.
 **Add to Morphe Manager:** [morphe-patches.software/?github=logm1lo/logm1lo-patches](https://morphe-patches.software/?github=logm1lo/logm1lo-patches)
 
 <!-- PATCHES_START -->
-> **[v1.0.8](https://github.com/logm1lo/logm1lo-patches/releases/tag/v1.0.8)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;1 patches total
+> **[v1.0.8-dev.3](https://github.com/logm1lo/logm1lo-patches/releases/tag/v1.0.8-dev.3)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;1 patches total
 <details open>
 <summary>📦 Calistree&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
 <br>
