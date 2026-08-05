@@ -3,10 +3,6 @@
 Generates the patches section of README.md from patches-list.json
 and injects it between <!-- PATCHES_START --> / <!-- PATCHES_END --> markers.
 
-Spoilers are expanded (open by default) if:
-  1. Total patch count <= AUTO_EXPAND_THRESHOLD.
-  2. The README marker explicitly says: <!-- PATCHES_START EXPANDED -->
-
 python3 generate_patches_readme.py <owner/repo> <branch> [patches-list.json] [README.md]
 """
 
@@ -59,97 +55,47 @@ for patch in data["patches"]:
             by_pkg[pkg]["patches"][patch["name"]] = patch
 
 
-def anchor(name):
-    return re.sub(r"-+", "-", re.sub(r"[^a-z0-9]+", "-", name.lower())).strip("-")
-
-
-def patches_table(patches):
-    rows = [
-        "| Patch | Description | Options |",
-        "|----------|------------------|-----------|",
-    ]
-    for p in sorted(patches, key=lambda x: x["name"]):
-        a = anchor(p["name"])
-        options = p.get("options") or []
-        if options:
-            parts = [opt.get("title") or opt.get("key") or "" for opt in options]
-            opts_cell = "<br>".join(f"• {t}" for t in parts)
-        else:
-            opts_cell = ""
-        desc = (p.get("description") or "").replace("\n", "<br>")
-        rows.append(f"| [{p['name']}](#{a}) | {desc} | {opts_cell} |")
-    return "\n".join(rows)
-
-
-def versions_table(targets):
-    if not targets:
-        return ""
-
-    cells = []
-    for t in targets:
-        ver   = t["version"]
-        if ver is None:
-            continue
-        label = f"[EXP] {ver}" if t.get("isExperimental") else ver
-        cells.append(label)
-
-    if not cells:
-        return ""
-
-    header = "| " + " | ".join(cells) + " |"
-    sep = "| " + " | ".join(":---:" for _ in cells) + " |"
-    rows = [header, sep]
-
-    descs = [(t.get("description") or "").replace("\n", "<br>") for t in targets]
-    if any(descs):
-        rows.append("| " + " | ".join(descs) + " |")
-
-    return "\n".join(rows)
-
-
-def spoiler(label, count, targets, tbl, expanded=False):
-    noun = "patch" if count == 1 else "patches"
-    vtbl = versions_table(targets)
-    versions_section = f"**Supported versions:**\n\n{vtbl}\n\n" if vtbl else ""
-    tag = "<details open>" if expanded else "<details>"
-    return f"""{tag}
-<summary>{label}&nbsp;&nbsp;•&nbsp;&nbsp;{count} {noun}</summary>
-<br>
-
-{versions_section}{tbl}
-
-</details>"""
-
-
-def build_content(expanded=False):
+def build_content():
     ver   = data["version"].lstrip("v")
     total = sum(len(e["patches"]) for e in by_pkg.values()) + len(universal)
 
     lines = [
         f"> **[v{ver}](https://github.com/{owner}/{repo}/releases/tag/v{ver})**"
         f"&nbsp;&nbsp;•&nbsp;&nbsp;`{branch}`&nbsp;&nbsp;•&nbsp;&nbsp;"
-        f"{total} patches total"
+        f"{total} patches total",
+        "",
+        "| App | Package | Versions | Patches |",
+        "|-----|---------|----------|---------|",
     ]
 
-    for pkg, entry in by_pkg.items():
-        patches = list(entry["patches"].values())
-        label   = entry['name']
-        lines.append(spoiler(label, len(patches), entry["targets"], patches_table(patches), expanded))
-        lines.append("")
+    for _pkg, entry in by_pkg.items():
+        app_name = entry["name"]
+        package  = f"`{_pkg}`"
+        targets = entry.get("targets", [])
+        if targets:
+            versions = ", ".join(
+                f"[EXP] {t['version']}" if t.get("isExperimental") else t["version"]
+                for t in targets
+                if t.get("version")
+            )
+        else:
+            versions = ""
+        patch_names = sorted(entry["patches"].keys())
+        if len(patch_names) == 1:
+            patches = patch_names[0]
+        else:
+            patches = "<ul>" + "".join(f"<li>{pn}</li>" for pn in patch_names) + "</ul>"
+        lines.append(f"| {app_name} | {package} | {versions} | {patches} |")
 
     if universal:
-        uni_patches = list(universal.values())
-        noun = "patch" if len(uni_patches) == 1 else "patches"
-        tag  = "<details open>" if expanded else "<details>"
-        lines.append(f"""{tag}
-<summary>Universal&nbsp;&nbsp;•&nbsp;&nbsp;{len(uni_patches)} {noun}</summary>
-<br>
+        uni_names = sorted(universal.keys())
+        if len(uni_names) == 1:
+            patches = uni_names[0]
+        else:
+            patches = "<ul>" + "".join(f"<li>{n}</li>" for n in uni_names) + "</ul>"
+        lines.append(f"| _Universal Patches_ | | | {patches} |")
 
-{patches_table(uni_patches)}
-
-</details>""")
-        lines.append("")
-
+    lines.append("")
     return "\n".join(lines)
 
 
@@ -165,7 +111,7 @@ END_MARKER    = "<!-- PATCHES_END -->"
 marker_match = re.search(START_PATTERN, readme)
 
 if not marker_match or END_MARKER not in readme:
-    print(build_content(expanded=False))
+    print(build_content())
     sys.stderr.write(
         f"ERROR: Markers not found in {readme_path}. Printed to stdout instead.\n"
     )
@@ -173,14 +119,7 @@ if not marker_match or END_MARKER not in readme:
 
 actual_start = marker_match.group(0)
 
-AUTO_EXPAND_THRESHOLD = 20
-
-expanded = (
-    total <= AUTO_EXPAND_THRESHOLD or
-    "EXPANDED" in actual_start
-)
-
-generated  = build_content(expanded=expanded)
+generated  = build_content()
 
 readme = readme.replace(
     "https://morphe.software/add-source?github=xyz-user/xyz-patches",
@@ -198,4 +137,4 @@ new_readme = re.sub(
     flags=re.DOTALL,
 )
 readme_path.write_text(new_readme, encoding="utf-8")
-print(f"Injected patches section into {readme_path} (v{ver}, branch={branch}, {total} patches, expanded={expanded})")
+print(f"Injected patches section into {readme_path} (v{ver}, branch={branch}, {total} patches)")
