@@ -1,3 +1,9 @@
+## [1.0.10-dev.1](https://github.com/logm1lo/logm1lo-patches/compare/v1.0.9...v1.0.10-dev.1) (2026-08-05)
+
+### 🐛 Bug Fixes
+
+* sync lockfile with @semantic-release/git v11 ([772e93d](https://github.com/logm1lo/logm1lo-patches/commit/772e93deb690b6adbfb5e9c624e24467a21783e7))
+
 ## [1.0.9-dev.2](https://github.com/logm1lo/logm1lo-patches/compare/v1.0.9-dev.1...v1.0.9-dev.2) (2026-08-05)
 
 ### 🐛 Bug Fixes
