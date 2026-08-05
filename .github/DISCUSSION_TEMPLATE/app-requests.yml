@@ -54,5 +54,3 @@ body:
           required: true
         - label: This app request is not for bypassing a region-lock (use a VPN).
           required: true
-
-<!-- Source: https://github.com/hoo-dles/morphe-patches/blob/main/.github/DISCUSSION_TEMPLATE/app-requests.yml -->
