@@ -5,14 +5,22 @@ Custom Morphe patches for Android apps.
 **Add to Morphe Manager:** [morphe-patches.software/?github=logm1lo/logm1lo-patches](https://morphe-patches.software/?github=logm1lo/logm1lo-patches)
 
 <!-- PATCHES_START -->
-<details open><summary><b>Available Patches</b></summary>
+> **[v1.0.7](https://github.com/logm1lo/logm1lo-patches/releases/tag/v1.0.7)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;1 patches total
+<details open>
+<summary>📦 Calistree&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
+<br>
 
-### Calistree (`com.calistree.calistree`)
-| Patch | Description | Versions |
-|-------|-------------|----------|
-| Premium Unlock | Unlocks all premium features in Calistree. | 5.8.5 |
+**🎯 Supported versions:**
+
+| 5.8.5 |
+| :---: |
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Premium Unlock](#premium-unlock) | Unlocks all Calistree PRO features. |  |
 
 </details>
+
 <!-- PATCHES_END -->
 
 ## Getting Started
@@ -68,7 +76,7 @@ Install Morphe Manager, add this repo as a source, select Calistree, and apply t
 Re-signing the APK breaks Google Play Services auth. Sign in before patching your APK, or use email/password instead of Google sign-in.
 
 **Can you make a patch for another app?**
-Possibly. Open an issue with the app name and version.
+Possibly. Submit a request in the [App Requests](https://github.com/logm1lo/logm1lo-patches/discussions/categories/app-requests) discussion area.
 
 **The patch does not work.**
 Make sure you are using the correct APK version. If it still fails, open an issue with details.
