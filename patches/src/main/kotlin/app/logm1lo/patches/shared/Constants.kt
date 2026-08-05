@@ -13,13 +13,3 @@ val COMPATIBILITY_CALISTREE = Compatibility(
         AppTarget(version = "5.8.5"),
     )
 )
-
-val COMPATIBILITY_ZALO = Compatibility(
-    name = "Zalo",
-    packageName = "com.zing.zalo",
-    appIconColor = 0x0180C7,
-    apkFileType = ApkFileType.APK,
-    targets = listOf(
-        AppTarget(version = "26.08.01"),
-    )
-)

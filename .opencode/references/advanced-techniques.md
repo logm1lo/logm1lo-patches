@@ -486,3 +486,43 @@ val probePatch = bytecodePatch(name = "Compatibility probe") {
     execute { /* no-op: validates toolchain only */ }
 }
 ```
+
+## Case Study: Calistree 5.8.5 — Flutter PRO Bypass
+
+### Architecture
+- **Framework**: Flutter 3.x (Dart 3.12.2 AOT), RevenueCat for purchases, Firebase Auth/CloudDB
+- **Patching approach**: 5 Java smali patches (RevenueCat SDK) + 10 Dart AOT hex patches (libapp.so)
+- **Tools used**: B(l)utter for libapp.so decompilation, morphe-cli for Java patching
+
+### Java Patches (RevenueCat SDK override)
+
+| # | Target Method | Type | Effect |
+|---|-------------|------|--------|
+| 1 | `EntitlementInfos.getActive()` | `iget active` → `iget all` | All entitlements show as active |
+| 2 | `CustomerInfo.getActiveSubscriptions()` | Body replacement | Returns `{"pro"}` |
+| 3 | `EntitlementInfosMapperKt.map()` | Body replacement | Fake PRO entitlement data |
+| 4 | `CustomerInfo.getAllPurchasedProductIds()` | Body replacement | Returns `{"pro"}` |
+| 5 | `CustomerInfoMapperKt.map()` | Inject before return | Adds `latestExpirationDate: 2099` |
+
+### Dart Hex Patches (libapp.so ARM64)
+
+| Offset | Original | Patched | Function | Effect |
+|--------|----------|---------|----------|--------|
+| `0x20aa36c` | `mov x0,x2` | `add x0,x27,#0x20` | `updateState` param | SetHasProAccess always true |
+| `0x20aa398` | `ldur x2,[fp,#-0x10]` | `add x2,x27,#0x20` | `updateState` state= | State always true |
+| `0x20aa414` | `add x0,x22,#0x30` (false) | `add x0,x22,#0x20` (true) | `hasProAccess` default | Null cache → true |
+| `0x20aa41c` | `mov x0,x1` | `add x0,x22,#0x20` (true) | `hasProAccess` cached | Stored value → true |
+| `0x20a9b28` | `mov x2,x3` | `add x2,x22,#0x20` (true) | `init()` setHasProAccess | Sync can't overwrite |
+| `0x29f5360` | `add x0,x22,#0x30` (false) | `add x0,x22,#0x20` (true) | Promotional check | Always returns true |
+| `0x22d6914` | `b.eq #0x22d691c` | `b #0x22d6954` | `hasReachedPlanLimit` null gate | Skip Go PRO popup |
+| `0x20a98bc` | `tbnz w1,#4,...` | `nop` | `init()` backup skip | Always set initial state |
+| `0x20a9860` | `mov x2,x22` (null) | `add x2,x22,#0x20` (true) | `StateNotifier` init | Root fix — initial state=true |
+| `0x22d6960` | `b.lt #0x22d69f0` | `b #0x22d69f0` | `hasReachedPlanLimit` | Remove ALL plan limits |
+
+### Key Insights
+
+1. **B(l)utter is essential** — Flutter Dart AOT can't be patched via smali. Need B(l)utter for asm/pp.txt analysis
+2. **Systematic gating** — Found 5 separate PRO gates: RevenueCat, LocalPreferences cache, Promotional access, Plan limits, Riverpod state
+3. **Persistence is subtle** — `hasReachedPlanLimit` uses `proAccessProvider` via Riverpod. State goes through `StateNotifier` init → `updateState` → `hasProAccess` cache chain
+4. **Register encoding matters** — Different Dart functions use different NULL registers (x22 vs x27). Must verify bytes at each offset
+5. **Label injection is fragile** — Smali `addInstructions` label placement doesn't work reliably. Use instruction replacement or register manipulation instead

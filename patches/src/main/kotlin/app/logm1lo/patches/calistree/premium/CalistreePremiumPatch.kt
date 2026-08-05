@@ -2,74 +2,108 @@ package app.logm1lo.patches.calistree.premium
 
 import app.logm1lo.patches.shared.COMPATIBILITY_CALISTREE
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
-import app.morphe.patcher.patch.rawResourcePatch
+import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.patch.bytecodePatch
-import app.morphe.patcher.Fingerprint
-import app.morphe.patcher.methodCall
-import com.android.tools.smali.dexlib2.Opcode
 
-internal object HealthConnectPremiumFingerprint : Fingerprint(
-    returnType = "Z",
-    parameters = listOf(),
-    filters = listOf(
-        methodCall(
-            opcode = Opcode.INVOKE_VIRTUAL,
-            name = "isPremium",
-            returnType = "Z",
-            parameters = listOf(),
-        ),
-    )
-)
+private val FAKE_ENTITLEMENT_SMALI = """
+    new-instance v0, Ljava/util/LinkedHashMap;
+    invoke-direct {v0}, Ljava/util/LinkedHashMap;-><init>()V
+    const-string v1, "identifier"
+    const-string v2, "pro"
+    invoke-virtual {v0, v1, v2}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+    const-string v1, "isActive"
+    sget-object v2, Ljava/lang/Boolean;->TRUE:Ljava/lang/Boolean;
+    invoke-virtual {v0, v1, v2}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+    const-string v1, "willRenew"
+    invoke-virtual {v0, v1, v2}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+    const-string v1, "isSandbox"
+    sget-object v2, Ljava/lang/Boolean;->FALSE:Ljava/lang/Boolean;
+    invoke-virtual {v0, v1, v2}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+    new-instance v1, Ljava/util/LinkedHashMap;
+    invoke-direct {v1}, Ljava/util/LinkedHashMap;-><init>()V
+    const-string v2, "pro"
+    invoke-virtual {v1, v2, v0}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+    new-instance v0, Ljava/util/LinkedHashMap;
+    invoke-direct {v0}, Ljava/util/LinkedHashMap;-><init>()V
+    const-string v2, "all"
+    invoke-static {v2, v0}, Lkm/v;->a(Ljava/lang/Object;Ljava/lang/Object;)Lkm/p;
+    move-result-object v0
+    const-string v2, "active"
+    invoke-static {v2, v1}, Lkm/v;->a(Ljava/lang/Object;Ljava/lang/Object;)Lkm/p;
+    move-result-object v1
+    const-string v2, "verification"
+    const-string v3, "NOT_REQUESTED"
+    invoke-static {v2, v3}, Lkm/v;->a(Ljava/lang/Object;Ljava/lang/Object;)Lkm/p;
+    move-result-object v2
+    filled-new-array {v0, v1, v2}, [Lkm/p;
+    move-result-object v0
+    invoke-static {v0}, Llm/o0;->l([Lkm/p;)Ljava/util/Map;
+    move-result-object v0
+    return-object v0
+""".trimIndent()
 
 @Suppress("unused")
 val calistreePremiumPatch = bytecodePatch(
     name = "Premium Unlock",
-    description = "Unlocks all premium features in Calistree. Calistree is a Flutter app — "
-            + "the main app logic lives in libapp.so (Dart AOT). This patch targets the Java-side "
-            + "Health Connect premium checks and Sentry initialization bypass.",
+    description = "Unlocks all Calistree PRO features. Overrides 5 RevenueCat Java methods "
+            + "(getActive, getActiveSubscriptions, entitlements serializer, "
+            + "allPurchasedProductIds, CustomerInfoMapper). Paired with 10 Dart AOT hex "
+            + "patches in libapp.so for PRO state persistence, plan limit bypass, "
+            + "promotional gate removal, and restart-proof initial state.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_CALISTREE)
 
     execute {
-        HealthConnectPremiumFingerprint.let { fp ->
-            val match = fp.matchOrNull() ?: return@let
-            match.method.addInstructions(0, """
-                const/4 v0, 0x1
-                return v0
+        GetActiveFingerprint.let { fp ->
+            val m = fp.matchOrNull() ?: return@let
+            m.method.replaceInstruction(fp.instructionMatches[0].index,
+                "iget-object v0, p0, Lcom/revenuecat/purchases/EntitlementInfos;->all:Ljava/util/Map;")
+        }
+
+        GetActiveSubsFingerprint.let { fp ->
+            val m = fp.matchOrNull() ?: return@let
+            m.method.addInstructions(0, """
+                new-instance v0, Ljava/util/HashSet;
+                invoke-direct {v0}, Ljava/util/HashSet;-><init>()V
+                const-string v1, "pro"
+                invoke-virtual {v0, v1}, Ljava/util/HashSet;->add(Ljava/lang/Object;)Z
+                return-object v0
             """)
         }
-    }
-}
 
-@Suppress("unused")
-val calistreeHexAppPatch = rawResourcePatch(
-    name = "Calistree Dart AOT Premium Bypass (hex)",
-    description = "Patches libapp.so (Dart AOT) to force premium return values. "
-            + "Requires manual identification of hex offsets. See analysis/calistree/notes/premium-bypass.md.",
-    default = false
-) {
-    compatibleWith(COMPATIBILITY_CALISTREE)
+        EntitlementMapFingerprint.let { fp ->
+            fp.matchOrNull()?.method?.addInstructions(0, FAKE_ENTITLEMENT_SMALI)
+        }
 
-    execute {
-        val libAppPath = "lib/arm64-v8a/libapp.so"
-        val file = get(libAppPath)
-        if (!file.exists()) return@execute
+        AllPurchasedIdsFingerprint.let { fp ->
+            fp.matchOrNull()?.method?.addInstructions(0, """
+                new-instance v0, Ljava/util/HashSet;
+                invoke-direct {v0}, Ljava/util/HashSet;-><init>()V
+                const-string v1, "pro"
+                invoke-virtual {v0, v1}, Ljava/util/HashSet;->add(Ljava/lang/Object;)Z
+                return-object v0
+            """)
+        }
 
-        val data = file.readBytes()
-        // ARM64 MOV X0, #1 + RET = 0x200080D2 0xC0035FD6
-        // Use manual search for premium function patterns in libapp.so:
-        //   1. Find string refs to "premium", "pro", "subscription" in binary
-        //   2. Trace back to calling functions
-        //   3. Overwrite function heads at identified offsets
-        // After identifying offsets, uncomment and add to list:
-        // val premiumOffsets = intArrayOf(0x..., 0x...)
-        // premiumOffsets.forEach { offset ->
-        //     data[offset] = 0x20; data[offset+1] = 0x00.toByte()
-        //     data[offset+2] = 0x80.toByte(); data[offset+3] = 0xD2.toByte()
-        //     data[offset+4] = 0xC0.toByte(); data[offset+5] = 0x03.toByte()
-        //     data[offset+6] = 0x5F.toByte(); data[offset+7] = 0xD6.toByte()
-        // }
-        // file.writeBytes(data)
+        CustomerInfoMapFingerprint.let { fp ->
+            val match = fp.matchOrNull() ?: return@let
+            val returnIdx = match.method.implementation!!.instructions
+                .indexOfLast { it.opcode == com.android.tools.smali.dexlib2.Opcode.RETURN_OBJECT }
+            if (returnIdx >= 0) {
+                match.method.addInstructions(returnIdx, """
+                    const-string v3, "latestExpirationDate"
+                    const-string v4, "2099-01-01T00:00:00.000Z"
+                    invoke-interface {v0, v3, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+                    const-string v3, "allExpirationDates"
+                    new-instance v4, Ljava/util/LinkedHashMap;
+                    invoke-direct {v4}, Ljava/util/LinkedHashMap;-><init>()V
+                    const-string v5, "pro"
+                    const-string v6, "2099-01-01T00:00:00.000Z"
+                    invoke-virtual {v4, v5, v6}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+                    invoke-interface {v0, v3, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+                """.trimIndent())
+            }
+        }
     }
 }
