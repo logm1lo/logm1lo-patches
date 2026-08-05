@@ -22,3 +22,6 @@ updates:
     target-branch: dev
     schedule:
       interval: monthly
+    ignore:
+      - dependency-name: "gradle"
+        versions: [">=9"]
