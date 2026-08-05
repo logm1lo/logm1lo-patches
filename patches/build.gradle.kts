@@ -27,10 +27,11 @@ dependencies {
 
 tasks {
     register<JavaExec>("generatePatchesList") {
-        description = "Build patch with patch list"
-        dependsOn(build)
+        description = "Generate patches-list.json from built MPP"
+        dependsOn("buildAndroid")
         classpath = sourceSets["main"].runtimeClasspath + patchListGeneratorClasspath
         mainClass.set("util.PatchListGeneratorKt")
+        workingDir = rootProject.projectDir
     }
 
     publish {
