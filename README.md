@@ -10,11 +10,6 @@ Custom Morphe patches for Android apps.
 |-------|-------------|----------|
 | Premium Unlock | Unlocks all premium features in Calistree. | 5.8.5 |
 
-### Zalo (`com.zing.zalo`)
-| Patch | Description | Versions |
-|-------|-------------|----------|
-| Remove Ads | Removes advertisements from Zalo. | 26.08.01 |
-
 </details>
 <!-- PATCHES_END -->
 
@@ -57,15 +52,6 @@ Output: `patches/build/libs/patches-<version>.mpp`
 ### Build and Install Patched APK
 ```bash
 ./scripts/build-and-test.sh com.example.app both
-```
-
-### OpenCode Workflow
-```
-/morphe-recon com.example.app       # Analyze APK metadata
-/morphe-decompile com.example.app   # Decompile to Java + Smali
-/morphe-hunt com.example.app premium # Find billing/license targets
-/morphe-write com.example.app       # Write patch code
-/morphe-build com.example.app       # Build, apply, install
 ```
 
 ## License

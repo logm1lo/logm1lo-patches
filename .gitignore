@@ -46,3 +46,8 @@ Morphe.keystore
 # Temporary
 /tmp/
 *.tmp
+
+# OpenCode workspace (local only)
+.opencode/
+AGENTS.md
+opencode.json
