@@ -60,13 +60,6 @@
           { "path": "patches/build/libs/patches-*.mpp" }
         ]
       }
-    ],
-    [
-      "@cleyrop-org/semantic-release-backmerge",
-      {
-        "branches": ["main"],
-        "backmergeTo": ["dev"]
-      }
     ]
   ]
 }
