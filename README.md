@@ -2,6 +2,8 @@
 
 Custom Morphe patches for Android apps.
 
+**Add to Morphe Manager:** [morphe-patches.software/?github=logm1lo/logm1lo-patches](https://morphe-patches.software/?github=logm1lo/logm1lo-patches)
+
 <!-- PATCHES_START -->
 <details open><summary><b>Available Patches</b></summary>
 
