@@ -1,3 +1,3 @@
-e0731b798398a62bd0923aa79a06c67330f4efa0a42a551225e302b349c3f4e4  /home/logmilo/Projects/logm1lo-patches/patches/build/libs/patches-1.0.1.mpp
-b6ce1a358e97b7070ce108ba033f766e689fc8f2285019e4f77b462ab58fcf01  patches-list.json
-3f7b13fa43d92a85d29537c31d0cd994115055ecbbdba6791701433f36434fdc  patches-bundle.json
+763d8fae21ce6d58f1514d6a419f0c086709af1074a27e21667c89ac5d0ca82e  /home/logmilo/Projects/logm1lo-patches/patches/build/libs/patches-1.0.2.mpp
+6f1e1270dda8dcbd4ca3dcf154c950b36a2c021b90a90a4309e942fc9cac3d63  patches-list.json
+ccfaed92ce6d9d6a428be8b4de49ca28467374064725c90bbb125861cf4a989e  patches-bundle.json
