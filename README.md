@@ -8,12 +8,12 @@ Custom Morphe patches for Android apps. **Add to Morphe Manager:** [deeplink](ht
 > App requests go to [Discussions](https://github.com/logm1lo/logm1lo-patches/discussions/categories/app-requests). Issues are for bugs and feature requests on existing supported apps.
 
 <!-- PATCHES_START -->
-> **[v1.0.10](https://github.com/logm1lo/logm1lo-patches/releases/tag/v1.0.10)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;3 patches total
+> **[v1.1.0-dev.1](https://github.com/logm1lo/logm1lo-patches/releases/tag/v1.1.0-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;4 patches total
 
 | App | Package | Versions | Patches |
 |-----|---------|----------|---------|
-| Calistree | `com.calistree.calistree` | 5.8.5 | Premium Unlock |
-| Cube Solver | `com.jeffprod.cubesolver` | 5.0.3 | Remove Ads, Puzzles Unlock |
+| Calistree | `com.calistree.calistree` | 5.8.5 | <ul><li>Dart Pro gates (libapp.so)</li><li>Premium Unlock</li></ul> |
+| Cube Solver | `com.jeffprod.cubesolver` | 5.0.3 | <ul><li>Puzzles Unlock</li><li>Remove Ads</li></ul> |
 
 <!-- PATCHES_END -->
 
