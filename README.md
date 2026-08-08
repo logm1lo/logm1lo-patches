@@ -8,7 +8,7 @@ Custom Morphe patches for Android apps. **Add to Morphe Manager:** [deeplink](ht
 > App requests go to [Discussions](https://github.com/logm1lo/logm1lo-patches/discussions/categories/app-requests). Issues are for bugs and feature requests on existing supported apps.
 
 <!-- PATCHES_START -->
-> **[v1.1.0-dev.1](https://github.com/logm1lo/logm1lo-patches/releases/tag/v1.1.0-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;4 patches total
+> **[v1.1.0](https://github.com/logm1lo/logm1lo-patches/releases/tag/v1.1.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;4 patches total
 
 | App | Package | Versions | Patches |
 |-----|---------|----------|---------|
