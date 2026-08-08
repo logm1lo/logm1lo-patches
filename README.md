@@ -8,24 +8,28 @@ Custom Morphe patches for Android apps. **Add to Morphe Manager:** [deeplink](ht
 > App requests go to [Discussions](https://github.com/logm1lo/logm1lo-patches/discussions/categories/app-requests). Issues are for bugs and feature requests on existing supported apps.
 
 <!-- PATCHES_START -->
-> **[v1.0.10](https://github.com/logm1lo/logm1lo-patches/releases/tag/v1.0.10)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;1 patches total
+> **[v1.0.10](https://github.com/logm1lo/logm1lo-patches/releases/tag/v1.0.10)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;3 patches total
 
 | App | Package | Versions | Patches |
 |-----|---------|----------|---------|
 | Calistree | `com.calistree.calistree` | 5.8.5 | Premium Unlock |
+| Cube Solver | `com.jeffprod.cubesolver` | 5.0.3 | Remove Ads, Puzzles Unlock |
 
 <!-- PATCHES_END -->
 
 ## FAQ
 
 **How do I use this?**
-Install [Morphe Manager](https://github.com/MorpheApp/morphe-desktop/releases), add this repo as a source, select Calistree, and apply the Premium Unlock patch.
+Install [Morphe Manager](https://github.com/MorpheApp/morphe-desktop/releases), add this repo as a source, select your app, and apply the Premium Unlock patch.
 
 **Why can't I sign in after patching?**
 Re-signing the APK breaks Google Play Services auth. Sign in before patching, or use email/password instead of Google sign-in.
 
-**What version of Calistree does this work with?**
-5.8.5. Other versions may work but aren't tested.
+**What versions are supported?**
+- Calistree: 5.8.5
+- Cube Solver: 5.0.3
+
+Other versions may work but aren't tested.
 
 **Can you make a patch for another app?**
 Submit a request in the [App Requests](https://github.com/logm1lo/logm1lo-patches/discussions/categories/app-requests) discussion area.
