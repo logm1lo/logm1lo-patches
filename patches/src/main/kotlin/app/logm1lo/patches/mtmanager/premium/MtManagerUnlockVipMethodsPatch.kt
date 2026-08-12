@@ -17,16 +17,21 @@ import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
  * `const/4 v0, 0x1; return v0`. Every call site then sees true with no
  * move-result interaction risk.
  *
- * Unlocked getters (safe set verified on the working build):
- *   ֡()Z login-confirm, ۠()Z UI/themes, ܰ()Z misc, ܺ()Z FTP, ᩶()Z misc, ᩷()Z misc
- * NOTE: ۘ()Z (MT_Protector) is deliberately LEFT FALSE — forcing it breaks the
- * file listing (Folders: 0) because it gates a VIP filter that fails with
- * stubbed natives.
+ * ALL SEVEN getters are now unlocked (2026-08-12 fresh hunt):
+ *   ֡()Z login-confirm, ۠()Z UI/themes, ܰ()Z misc, ܺ()Z FTP/editors,
+ *   ᩶()Z misc, ᩷()Z misc, and ۘ()Z MT_Protector/tools.
+ *
+ * ۘ() was previously left false because forcing it made the file listing
+ * show "Folders: 0" — the file-list adapter `l.ۨ᩺ܰ.ܳ()` selects the VIP
+ * list variant `l.᩷ۛܰ.ܿ()` when ۘ() is true, and that variant returns
+ * empty with stubbed natives. The companion patch
+ * `mtmanagerVipListVariantFixPatch` makes `l.᩷ۛܰ.ܿ()` delegate to the
+ * working normal variant `l.᩷ۛܰ.ܳ()`, so forcing ۘ() true is now safe.
  */
 @Suppress("unused")
 val mtmanagerUnlockVipMethodsPatch = bytecodePatch(
     name = "Unlock VIP (methods)",
-    description = "Replaces the VIP getter methods on l.ۨ᩸ܰ to always return true.",
+    description = "Replaces all seven VIP getter methods on l.ۨ᩸ܰ to always return true.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_MTMANAGER)
@@ -35,6 +40,7 @@ val mtmanagerUnlockVipMethodsPatch = bytecodePatch(
         val vipClass = mutableClassDefByOrNull("Ll/\u06e8\u1a78\u0730;") ?: return@execute
         val targets = setOf(
             "\u05a1", // ֡ login-confirm
+            "\u06d8", // ۘ MT_Protector / tool gate (safe via VIP-list-variant fix)
             "\u06e0", // ۠ UI/themes
             "\u0730", // ܰ misc
             "\u073a", // ܺ FTP
