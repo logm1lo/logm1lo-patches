@@ -89,3 +89,44 @@ internal object MtFileDispatcherFingerprint : Fingerprint(
         "Ljava/lang/String;",
     )
 )
+
+/**
+ * Universal tool runner `Ll/ᩴۜܶ;->ܳ()V` — the executor that actually drives
+ * Dex2Smali / Dex2Jar / Sign conversions reached via the "Open with" tool
+ * menu. It is constructed with a tool descriptor (`Ll/۫ۜܶ;` field `ۤ`) whose
+ * `ۧ()` returns the tool name and `۟()` returns the selected file node.
+ *
+ * Frida-confirmed call path (Dex2Smali on test.dex.bak):
+ *   l/ᩴۜܶ.ܳ()  ->  l/ۙۧ᩶.<init>(test.dex_smali.zip)  ->  native (stubbed)
+ */
+internal object MtToolRunnerFingerprint : Fingerprint(
+    definingClass = "Ll/\u1a74\u06dc\u0736;", // Ll/ᩴۜܶ;
+    name = "\u0733", // ܳ
+    returnType = "V",
+    parameters = emptyList(),
+    filters = listOf(
+        methodCall(smali = "Ll/\u06eb\u06dc\u0736;->\u06df()Ll/\u0733\u06eb\u06e7;") // Ll/۫ۜܶ;->۟()Ll/ܳ۫ۧ;
+    )
+)
+
+/**
+ * Sign tool dispatcher `Ll/ܿۜܶ;->۟(Ll/ܳ۫ۧ;Ll/ܳ۫ۧ;Ll/ۖ᩹ܶ;ZLl/۟ۜܶ;)V`.
+ * Frida-verified: the Sign dialog OK drives this method, which creates the
+ * `l/ۙۧ᩶` writer with the output `_sign.apk`. p1 = input node, p2 = output
+ * node (both `Ll/ܳ۫ۧ;` with `֫۟()` path getters).
+ */
+internal object MtSignDispatcherFingerprint : Fingerprint(
+    definingClass = "Ll/\u073f\u06dc\u0736;", // Ll/ܿۜܶ;
+    name = "\u06df", // ۟
+    returnType = "V",
+    parameters = listOf(
+        "Ll/\u0733\u06eb\u06e7;", // Ll/ܳ۫ۧ;
+        "Ll/\u0733\u06eb\u06e7;",
+        "Ll/\u06d6\u1a79\u0736;", // Ll/ۖ᩹ܶ;
+        "Z",
+        "Ll/\u06df\u06dc\u0736;", // Ll/۟ۜܶ;
+    ),
+    filters = listOf(
+        methodCall(smali = "Ll/\u06d9\u06e7\u1a76;-><init>(Ll/\u0733\u06eb\u06e7;)V") // Ll/ۙۧ᩶-><init>(file)
+    )
+)
