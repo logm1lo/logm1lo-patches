@@ -28,13 +28,19 @@ import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
  * is forced to 1. The branch/conditional after it then sees "true" and
  * proceeds as if VIP were active.
  *
+ * DEPRECATED / SUPERSEDED: the method-level `Unlock VIP (methods)` patch
+ * (mtmanagerUnlockVipMethodsPatch) now replaces ALL SEVEN getter method
+ * bodies directly, which is cleaner and covers every call site uniformly.
+ * This call-site patch is kept default=false to avoid double-patching the
+ * same move-result instructions.
+ *
  * Does NOT affect the login check (see Login Removal / Bypass patch for that).
  */
 @Suppress("unused")
 val mtmanagerUnlockVipPatch = bytecodePatch(
     name = "Unlock VIP",
     description = "Unlocks VIP features (FTP/SFTP/SMB/WebDav, MT_Protector, themes).",
-    default = true
+    default = false
 ) {
     compatibleWith(COMPATIBILITY_MTMANAGER)
 
