@@ -29,6 +29,9 @@ public final class MtTools {
     /** Initialized by the injected call site (app Context). */
     private static volatile Context context;
 
+    /** Set once the file list has been seeded (avoids repeated reflection cost). */
+    private static volatile boolean fileListSeeded = false;
+
     /**
      * Called by the patch once at startup to let the extension cache the app
      * context (used for keystore access and temp dirs).
@@ -319,6 +322,235 @@ public final class MtTools {
             android.util.Log.e("MtTools", "dispatchSign failed", t);
             return false;
         }
+    }
+
+    /**
+     * Self-healing file-list feeder.
+     *
+     * MT Manager's native file-index is absent on re-signed builds, so the
+     * visible file panes stay empty. This method (a) resolves the active file
+     * source ({@code l/۠ۛܳ.ۘ()}), (b) lists the current directory from the real
+     * filesystem, (c) converts each entry to the pane's item type
+     * ({@code l/ܿۛܳ}) and (d) stores the items into the file source so the
+     * adapter's getItemCount()/getItem() finally see them.
+     *
+     * Idempotent: once the source has items it does nothing (returns 0).
+     * All obfuscated classes/methods are reached by reflection using the
+     * extension's own class loader (the app's protected class loader would
+     * otherwise reject cross-dex references), matching the existing tools
+     * dispatch pattern.
+     *
+     * @return number of items seeded, 0 if already populated, -1 on failure
+     */
+    @SuppressWarnings("unused")
+    public static int feedFileList(String dirPath) {
+        if (fileListSeeded) return 0;
+        // Post the actual fill to the main thread so it never runs while the
+        // RecyclerView is mid-layout (notifyDataSetChanged from the app's
+        // observer would otherwise throw "Cannot call this method while
+        // RecyclerView is computing a layout"). getItemCount() may be called
+        // from any thread during a layout pass; scheduling keeps us safe.
+        final String base = dirPath != null && !dirPath.isEmpty() ? dirPath : "/storage/emulated/0";
+        try {
+            android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+            h.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        doFeedFileList(base);
+                    } catch (Throwable t) {
+                        android.util.Log.e("MtTools", "feedFileList background failed", t);
+                    }
+                }
+            }, 3000L);
+            return 1; // scheduled
+        } catch (Throwable t) {
+            // No main looper yet (early startup) — fall back to inline.
+            try {
+                return doFeedFileList(base);
+            } catch (Throwable t2) {
+                android.util.Log.e("MtTools", "feedFileList failed", t2);
+                return -1;
+            }
+        }
+    }
+
+    /** Performs the actual directory listing + file-source fill. */
+    private static int doFeedFileList(String base) {
+        try {
+            ClassLoader cl = MtTools.class.getClassLoader();
+            File dir = new File(base);
+            if (!dir.isDirectory()) return -1;
+
+            // Resolve the registry l/۠ۛܳ.ۘ() -> active file source
+            Class<?> regCls = Class.forName("l.\u06e0\u06db\u0733", true, cl); // l/۠ۛܳ
+            Object src = callStaticNoArg(regCls, "\u06d8"); // ۘ()
+            if (src == null) return -1;
+
+            // Get the internal item list via l/֡ۛܳ.ۧ()ArrayList
+            Object list = callObject(src, "\u06e7"); // ۧ()
+            if (!(list instanceof java.util.List)) return -1;
+            @SuppressWarnings("unchecked")
+            java.util.List<Object> l = (java.util.List<Object>) list;
+            if (!l.isEmpty()) { fileListSeeded = true; return 0; } // already seeded — keep it idempotent
+
+            File[] children = dir.listFiles();
+            if (children == null) return -1;
+
+            // Resolve the item class + constructor (name, path)
+            Class<?> itemCls = Class.forName("l.\u073f\u06db\u0733", true, cl); // l/ܿۛܳ
+            java.lang.reflect.Constructor<?> itemCtor = itemCls.getConstructor(String.class, String.class);
+
+            // Resolve the is-directory setter ۟(Z)V (one-arg boolean on l/ܿۛܳ)
+            java.lang.reflect.Method setDir = findMethod(itemCls, boolean.class);
+
+            // Resolve the friendly-name helper l/۬ܿ۬.۟(String)String
+            Class<?> nameCls = Class.forName("l.\u06ec\u073f\u06ec", true, cl); // l/۬ܿ۬
+            java.lang.reflect.Method friendly = null;
+            for (java.lang.reflect.Method m : nameCls.getDeclaredMethods()) {
+                if (m.getName().equals("\u06df") && m.getParameterTypes().length == 1
+                        && m.getParameterTypes()[0] == String.class
+                        && m.getReturnType() == String.class) {
+                    m.setAccessible(true);
+                    friendly = m;
+                    break;
+                }
+            }
+
+            for (File f : children) {
+                String path = f.getAbsolutePath();
+                String name = friendly != null ? (String) friendly.invoke(null, path) : f.getName();
+                Object item = itemCtor.newInstance(name, path);
+                if (setDir != null) {
+                    try { setDir.invoke(item, f.isDirectory()); } catch (Throwable ignored) { }
+                }
+                l.add(item);
+            }
+
+            fileListSeeded = true;
+            android.util.Log.i("MtTools", "feedFileList: " + l.size() + " items from " + base);
+            return l.size();
+        } catch (Throwable t) {
+            android.util.Log.e("MtTools", "doFeedFileList failed", t);
+            return -1;
+        }
+    }
+
+    /**
+     * Builds the status-bar item list for a directory.
+     *
+     * The file browser's status bar (l/ۤۚܳ.ܺ۟()) counts "Folders / Files"
+     * from `this.᩷()`. That list is normally fed by the native loader; on
+     * re-signed builds it stays empty -> "Folders: 0 Files: 0". This method
+     * lists the real directory and returns a {@code List} of the counter's
+     * item type {@code l/᩶᩺ܳ} (implemented by {@code l/ۘ֫ܳ}) built via its
+     * public constructor (String name, String path, String parent,
+     * long size, long time, boolean isDirectory).
+     *
+     * @param dirPath directory to list (e.g. "/storage/emulated/0")
+     * @return a List of l/᩶᩺ܳ items (possibly empty), or null on failure
+     */
+    @SuppressWarnings("unused")
+    public static java.util.List<Object> feedStatusItems(String dirPath) {
+        try {
+            ClassLoader cl = MtTools.class.getClassLoader();
+            File dir = new File(dirPath != null ? dirPath : "/storage/emulated/0");
+            if (!dir.isDirectory()) return java.util.Collections.emptyList();
+            File[] children = dir.listFiles();
+            if (children == null) return java.util.Collections.emptyList();
+
+            Class<?> itemCls = Class.forName("l.\u06d8\u05ab\u0733", true, cl); // l/ۘ֫ܳ
+            java.lang.reflect.Constructor<?> ctor = itemCls.getConstructor(
+                String.class, String.class, String.class, long.class, long.class, boolean.class);
+
+            java.util.List<Object> out = new java.util.ArrayList<>(children.length);
+            for (File f : children) {
+                try {
+                    String name = f.getName();
+                    String path = f.getAbsolutePath();
+                    long size = f.isDirectory() ? 0 : f.length();
+                    long time = f.lastModified();
+                    out.add(ctor.newInstance(name, path, "/", size, time, f.isDirectory()));
+                } catch (Throwable ignored) { }
+            }
+            return out;
+        } catch (Throwable t) {
+            android.util.Log.e("MtTools", "feedStatusItems failed", t);
+            return null;
+        }
+    }
+
+    /**
+     * Builds the slide-panel file list item list for a directory.
+     *
+     * The visible file browser (slide panel l/ۗ᩺ܰ, with History/Bookmarks tabs)
+     * renders its list from a file source (l/֡ۛܳ) whose items are
+     * {@code l/ܿۛܳ} (name + path constructor). On re-signed builds that source
+     * only contains the breadcrumb, so the panel renders a white page.
+     *
+     * This method lists the real directory and returns a {@code List} of
+     * {@code l/ܿۛܳ} items built via its public constructor
+     * {@code (String name, String path)} — no file-type required (the row
+     * binding falls back to a plain folder/path presentation).
+     *
+     * @param dirPath directory to list (e.g. "/storage/emulated/0")
+     * @return a List of l/ܿۛܳ items (possibly empty), or null on failure
+     */
+    @SuppressWarnings("unused")
+    public static java.util.List<Object> feedFileItems(String dirPath) {
+        try {
+            ClassLoader cl = MtTools.class.getClassLoader();
+            File dir = new File(dirPath != null ? dirPath : "/storage/emulated/0");
+            if (!dir.isDirectory()) return java.util.Collections.emptyList();
+            File[] children = dir.listFiles();
+            if (children == null) return java.util.Collections.emptyList();
+
+            Class<?> itemCls = Class.forName("l.\u073f\u06db\u0733", true, cl); // l/ܿۛܳ
+            java.lang.reflect.Constructor<?> ctor = itemCls.getConstructor(
+                String.class, String.class);
+
+            java.util.List<Object> out = new java.util.ArrayList<>(children.length);
+            for (File f : children) {
+                try {
+                    out.add(ctor.newInstance(f.getName(), f.getAbsolutePath()));
+                } catch (Throwable ignored) { }
+            }
+            return out;
+        } catch (Throwable t) {
+            android.util.Log.e("MtTools", "feedFileItems failed", t);
+            return null;
+        }
+    }
+
+    /** Finds a method with a single boolean param. */
+    private static java.lang.reflect.Method findMethod(Class<?> cls, Class<?> retType) {
+        for (java.lang.reflect.Method m : cls.getDeclaredMethods()) {
+            if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == boolean.class) {
+                m.setAccessible(true);
+                return m;
+            }
+        }
+        return null;
+    }
+
+    /** Invokes a static no-arg method returning Object, walking superclasses. */
+    private static Object callStaticNoArg(Class<?> cls, String name) {
+        Class<?> c = cls;
+        while (c != null) {
+            try {
+                for (java.lang.reflect.Method m : c.getDeclaredMethods()) {
+                    if (m.getName().equals(name) && m.getParameterTypes().length == 0) {
+                        if (!java.lang.reflect.Modifier.isStatic(m.getModifiers())) continue;
+                        m.setAccessible(true);
+                        return m.invoke(null);
+                    }
+                }
+            } catch (Exception e) {
+                return null;
+            }
+            c = c.getSuperclass();
+        }
+        return null;
     }
 
     /** Creates a temp directory under the app cache (fallback to java.io.tmpdir). */
