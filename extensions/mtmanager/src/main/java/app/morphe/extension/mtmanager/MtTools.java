@@ -454,7 +454,7 @@ public final class MtTools {
     public static java.util.List<Object> feedStatusItems(String dirPath) {
         try {
             ClassLoader cl = MtTools.class.getClassLoader();
-            File dir = new File(dirPath != null ? dirPath : "/storage/emulated/0");
+            File dir = new File(dirPath != null && !dirPath.isEmpty() ? dirPath : "/storage/emulated/0");
             if (!dir.isDirectory()) return java.util.Collections.emptyList();
             File[] children = dir.listFiles();
             if (children == null) return java.util.Collections.emptyList();
@@ -501,7 +501,8 @@ public final class MtTools {
         try {
             android.util.Log.i("MtTools", "feedFileItems called path=" + dirPath);
             ClassLoader cl = MtTools.class.getClassLoader();
-            File dir = new File(dirPath != null ? dirPath : "/storage/emulated/0");
+            // Empty path (browser path field not yet populated at startup) -> default to internal storage root.
+            File dir = new File(dirPath != null && !dirPath.isEmpty() ? dirPath : "/storage/emulated/0");
             if (!dir.isDirectory()) { android.util.Log.i("MtTools", "feedFileItems NOT a dir"); return java.util.Collections.emptyList(); }
             File[] children = dir.listFiles();
             if (children == null) { android.util.Log.i("MtTools", "feedFileItems listFiles null"); return java.util.Collections.emptyList(); }
