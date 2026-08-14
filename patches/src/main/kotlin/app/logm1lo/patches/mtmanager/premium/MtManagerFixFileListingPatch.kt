@@ -42,7 +42,10 @@ val mtmanagerFixFileListingPatch = bytecodePatch(
     default = true
 ) {
     compatibleWith(COMPATIBILITY_MTMANAGER)
-    dependsOn(mtmanagerStubNativeMethodsPatch)
+    // NOTE (fix19): removed dependsOn(mtmanagerStubNativeMethodsPatch). The splice
+    // approach delivers working natives; pulling the stub patch in under
+    // --exclusive stubbed natives the app needs (NoSuchMethodError at launch).
+    // This patch forces the file-listing gates independently.
 
     execute {
         val factory = mutableClassDefByOrNull("Ll/\u05a8\u06eb\u06e7;") ?: return@execute // l.֨۫ۧ
