@@ -2,6 +2,7 @@ package app.logm1lo.patches.mtmanager.premium
 
 import app.logm1lo.patches.shared.COMPATIBILITY_MTMANAGER
 import app.morphe.patcher.patch.bytecodePatch
+import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
 import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction10x
@@ -33,7 +34,10 @@ val mtmanagerFixAccountMapPatch = bytecodePatch(
     default = true
 ) {
     compatibleWith(COMPATIBILITY_MTMANAGER)
-    dependsOn(mtmanagerStubNativeMethodsPatch)
+    // NOTE (fix19): removed dependsOn(mtmanagerStubNativeMethodsPatch). The splice
+    // approach delivers working natives; pulling the stub patch in under
+    // --exclusive stubbed natives the app needs (NoSuchMethodError at launch).
+    // This patch only modifies l.ۨ᩸ܰ.۟()Map independently.
 
     execute {
         val vipClass = mutableClassDefByOrNull("Ll/\u06e8\u1a78\u0730;") ?: return@execute
@@ -63,9 +67,14 @@ val mtmanagerFixAccountMapPatch = bytecodePatch(
         // return-object v0 (Format11x — takes register v0)
         impl.addInstruction(BuilderInstruction11x(Opcode.RETURN_OBJECT, 0))
 
+        // CRITICAL (fix19): clear the NATIVE access flag. This method is a native
+        // Map getter; giving it code while keeping native → dex verification fails
+        // ("Method has code, but is marked native" → ClassNotFoundException).
+        val newFlags = target.accessFlags and AccessFlags.NATIVE.value.inv()
+
         val newMethod = ImmutableMethod(
             target.definingClass, target.name, target.parameters, target.returnType,
-            target.accessFlags, target.annotations, target.hiddenApiRestrictions,
+            newFlags, target.annotations, target.hiddenApiRestrictions,
             impl
         )
         vipClass.methods.remove(target)

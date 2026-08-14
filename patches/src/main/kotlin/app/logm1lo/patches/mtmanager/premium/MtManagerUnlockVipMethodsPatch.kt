@@ -3,6 +3,7 @@ package app.logm1lo.patches.mtmanager.premium
 import app.logm1lo.patches.shared.COMPATIBILITY_MTMANAGER
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
+import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
 import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction11n
@@ -58,9 +59,15 @@ val mtmanagerUnlockVipMethodsPatch = bytecodePatch(
             impl.addInstruction(BuilderInstruction11n(Opcode.CONST_4, 0, 1))
             impl.addInstruction(com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction11x(Opcode.RETURN, 0))
 
+            // CRITICAL (fix19): clear the NATIVE access flag. Keeping it set leaves
+            // a method that "has code, but is marked native" → dex verification fails
+            // (ClassNotFoundException at Application instantiation). This mirrors the
+            // StubNativeMethodsPatch flag clearing.
+            val newFlags = method.accessFlags and AccessFlags.NATIVE.value.inv()
+
             val newMethod = ImmutableMethod(
                 method.definingClass, method.name, method.parameters, method.returnType,
-                method.accessFlags, method.annotations, method.hiddenApiRestrictions,
+                newFlags, method.annotations, method.hiddenApiRestrictions,
                 impl
             )
             vipClass.methods.remove(method)
