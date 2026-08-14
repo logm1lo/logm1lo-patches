@@ -345,33 +345,20 @@ public final class MtTools {
     @SuppressWarnings("unused")
     public static int feedFileList(String dirPath) {
         if (fileListSeeded) return 0;
-        // Post the actual fill to the main thread so it never runs while the
-        // RecyclerView is mid-layout (notifyDataSetChanged from the app's
-        // observer would otherwise throw "Cannot call this method while
-        // RecyclerView is computing a layout"). getItemCount() may be called
-        // from any thread during a layout pass; scheduling keeps us safe.
+        // Populate SYNCHRONOUSLY (no background delay). This method is injected
+        // into the file-source count method l/֡ۛܳ.ܶ()I which the ListView's
+        // getCount() calls during layout. A delayed background fill mutated the
+        // list AFTER getCount() was sampled -> "content of the adapter has
+        // changed but ListView did not receive a notification" IllegalState
+        // crash on the next touch. Synchronous fill keeps getCount/getView
+        // consistent: feedFileList returns the list size and the count call
+        // returns it immediately, so the adapter is always in sync.
         final String base = dirPath != null && !dirPath.isEmpty() ? dirPath : "/storage/emulated/0";
         try {
-            android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
-            h.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        doFeedFileList(base);
-                    } catch (Throwable t) {
-                        android.util.Log.e("MtTools", "feedFileList background failed", t);
-                    }
-                }
-            }, 3000L);
-            return 1; // scheduled
+            return doFeedFileList(base);
         } catch (Throwable t) {
-            // No main looper yet (early startup) — fall back to inline.
-            try {
-                return doFeedFileList(base);
-            } catch (Throwable t2) {
-                android.util.Log.e("MtTools", "feedFileList failed", t2);
-                return -1;
-            }
+            android.util.Log.e("MtTools", "feedFileList failed", t);
+            return -1;
         }
     }
 
@@ -429,6 +416,7 @@ public final class MtTools {
 
             fileListSeeded = true;
             android.util.Log.i("MtTools", "feedFileList: " + l.size() + " items from " + base);
+            notifyBrowserAdapters();
             return l.size();
         } catch (Throwable t) {
             android.util.Log.e("MtTools", "doFeedFileList failed", t);
@@ -526,8 +514,130 @@ public final class MtTools {
         }
     }
 
-    /** Finds a method with a single boolean param. */
-    private static java.lang.reflect.Method findMethod(Class<?> cls, Class<?> retType) {
+    /**
+     * Feeds the FLAT file browser's item list (l/ۜ۫ܶ -> l/ۤ۫ܶ items) with the
+     * real directory listing.
+     *
+     * The flat browser (genuine layout, no History/Bookmarks slide panel) uses
+     * `l/ۤ۫ܶ` items (public ctor: (String name, int flags, String path,
+     * boolean isDirectory)) and its click handler `l/ۜ۫ܶ.onItemClick`
+     * check-casts items to that type. The `feedFileItems()` helper creates
+     * `l/ܿۛܳ` (slide-panel type) — wrong for the flat browser. This helper
+     * creates the correct `l/ۤ۫ܶ` type so row clicks (folder navigation) work.
+     *
+     * @param dirPath directory to list (empty -> /storage/emulated/0)
+     * @return List of l/ۤ۫ܶ items, or null on failure
+     */
+    @SuppressWarnings("unused")
+    public static java.util.List<Object> feedFlatFileItems(String dirPath) {
+        try {
+            android.util.Log.i("MtTools", "feedFlatFileItems called path=" + dirPath);
+            ClassLoader cl = MtTools.class.getClassLoader();
+            File dir = new File(dirPath != null && !dirPath.isEmpty() ? dirPath : "/storage/emulated/0");
+            if (!dir.isDirectory()) {
+                android.util.Log.i("MtTools", "feedFlatFileItems NOT a dir");
+                return java.util.Collections.emptyList();
+            }
+            File[] children = dir.listFiles();
+            if (children == null) {
+                android.util.Log.i("MtTools", "feedFlatFileItems listFiles null");
+                return java.util.Collections.emptyList();
+            }
+
+            // l/ۤ۫ܶ (click-handler item type) — public ctor (String,int,String,boolean)
+            Class<?> itemCls = Class.forName("l.\u06e4\u06eb\u0736", true, cl);
+            java.lang.reflect.Constructor<?> ctor = itemCls.getConstructor(
+                String.class, int.class, String.class, boolean.class);
+
+            java.util.List<Object> out = new java.util.ArrayList<>(children.length);
+            int flags = 0;
+            for (File f : children) {
+                try {
+                    // flags: 0 = file, 1 = directory (index into the item-type table)
+                    out.add(ctor.newInstance(f.getName(), f.isDirectory() ? 1 : 0,
+                        f.getAbsolutePath(), f.isDirectory()));
+                } catch (Throwable ignored) { }
+            }
+            android.util.Log.i("MtTools", "feedFlatFileItems returning " + out.size() + " items");
+            return out;
+        } catch (Throwable t) {
+            android.util.Log.e("MtTools", "feedFlatFileItems failed", t);
+            return null;
+        }
+    }
+
+    /**
+     * Notifies the file-browser ListView adapter after the file list is seeded.
+     *
+     * The flat browser renders rows through a ListView (class l/ܳۚܰ) whose
+     * adapter wraps the file source. When the feed mutates the source's list
+     * from a delayed handler, the ListView throws "The content of the adapter
+     * has changed but ListView did not receive a notification" on the next
+     * touch. After seeding we must call notifyDataSetChanged() on the browser
+     * adapter. We find it by walking the activity decor for the ListView that
+     * has a non-empty adapter, then invoke notifyDataSetChanged() on the main
+     * thread (layout-safe, same pattern as the deferred feed).
+     */
+    private static void notifyBrowserAdapters() {
+        try {
+            final android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+            h.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        android.app.Activity a = currentActivity();
+                        if (a == null) return;
+                        android.view.ViewGroup decor = (android.view.ViewGroup) a.getWindow().getDecorView();
+                        notifyListViews(decor);
+                    } catch (Throwable ignored) { }
+                }
+            }, 500L);
+        } catch (Throwable ignored) { }
+    }
+
+    /** Walks a view tree, calling notifyDataSetChanged on every ListView adapter. */
+    private static void notifyListViews(android.view.View v) {
+        try {
+            if (v instanceof android.widget.AbsListView) {
+                android.widget.Adapter a = ((android.widget.AbsListView) v).getAdapter();
+                if (a instanceof android.widget.BaseAdapter) {
+                    try { ((android.widget.BaseAdapter) a).notifyDataSetChanged(); } catch (Throwable ignored) { }
+                }
+            }
+            if (v instanceof android.view.ViewGroup) {
+                android.view.ViewGroup g = (android.view.ViewGroup) v;
+                for (int i = 0; i < g.getChildCount(); i++) {
+                    notifyListViews(g.getChildAt(i));
+                }
+            }
+        } catch (Throwable ignored) { }
+    }
+
+    /** Returns the current resumed activity via reflection on ActivityThread. */
+    private static android.app.Activity currentActivity() {
+        try {
+            Class<?> at = Class.forName("android.app.ActivityThread");
+            java.lang.reflect.Method cur = at.getMethod("currentActivityThread");
+            Object thread = cur.invoke(null);
+            java.lang.reflect.Field acts = at.getDeclaredField("mActivities");
+            acts.setAccessible(true);
+            Object map = acts.get(thread);
+            java.util.ArrayList<?> all = new java.util.ArrayList<>(
+                ((java.util.Map<?, ?>) map).values());
+            for (int i = all.size() - 1; i >= 0; i--) {
+                Object rec = all.get(i);
+                try {
+                    java.lang.reflect.Field actF = rec.getClass().getDeclaredField("activity");
+                    actF.setAccessible(true);
+                    android.app.Activity act = (android.app.Activity) actF.get(rec);
+                    if (act != null && !act.isFinishing()) return act;
+                } catch (Throwable ignored) { }
+            }
+        } catch (Throwable ignored) { }
+        return null;
+    }
+
+    /** Finds a method with a single boolean param. */    private static java.lang.reflect.Method findMethod(Class<?> cls, Class<?> retType) {
         for (java.lang.reflect.Method m : cls.getDeclaredMethods()) {
             if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == boolean.class) {
                 m.setAccessible(true);
