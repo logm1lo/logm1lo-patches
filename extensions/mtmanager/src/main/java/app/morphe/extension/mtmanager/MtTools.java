@@ -637,6 +637,125 @@ public final class MtTools {
         return null;
     }
 
+    /**
+     * Feeds the FLAT browser's native file-index store (l/ᩴܿ᩶ -> l/ۚܶܶ) with the
+     * real directory listing so the dual-pane browser renders real rows.
+     *
+     * The flat browser adapter l/ۤۨܶ.getCount()/getView() read
+     * l/֡ۨܶ.ܳ (l/ᩴܿᶩ index) -> .ܳ (l/ۚܶܶ store) -> ܿ(I)String for row text.
+     * On splice builds the native index isn't rebuilt, so the store holds stale
+     * placeholder items ("Android" x42). This helper reaches the store via the
+     * fragment's state field and adds one l/᩺ܶܶ item per real file entry using
+     * the store's add-by-name method (String, [l/᩶ܳܶ)I.
+     *
+     * @param fragment the l/ܰۨܶ flat-browser fragment instance
+     * @return number of items added, -1 on failure
+     */
+    @SuppressWarnings("unused")
+    public static int feedFlatIndex(Object fragment) {
+        try {
+            ClassLoader cl = MtTools.class.getClassLoader();
+            if (fragment == null) { android.util.Log.i("MtTools", "feedFlatIndex: fragment null"); return -1; }
+            android.util.Log.i("MtTools", "feedFlatIndex: fragment=" + fragment.getClass().getName());
+
+            // l/ܰۨܶ -> field ۚܿ (l/֡ۨܶ state)
+            java.lang.reflect.Field stateF = findField(fragment.getClass(), "\u06da\u073f"); // ۚܿ
+            if (stateF == null) { android.util.Log.i("MtTools", "feedFlatIndex: no state field"); return -1; }
+            Object state = stateF.get(fragment);
+            if (state == null) { android.util.Log.i("MtTools", "feedFlatIndex: state null"); return -1; }
+
+            // state.ܳ -> l/ᩴܿ᩶ index
+            java.lang.reflect.Field indexF = findField(state.getClass(), "\u0733"); // ܳ
+            if (indexF == null) { android.util.Log.i("MtTools", "feedFlatIndex: no index field"); return -1; }
+            Object index = indexF.get(state);
+            if (index == null) { android.util.Log.i("MtTools", "feedFlatIndex: index null"); return -1; }
+
+            // index.ܳ -> l/ۚܶܶ store
+            java.lang.reflect.Field storeF = findField(index.getClass(), "\u0733"); // ܳ
+            if (storeF == null) { android.util.Log.i("MtTools", "feedFlatIndex: no store field"); return -1; }
+            Object store = storeF.get(index);
+            if (store == null) { android.util.Log.i("MtTools", "feedFlatIndex: store null"); return -1; }
+
+            // store.ܶ()I -> size; if already populated (native loader worked) skip
+            Object sizeObj = callNoArg(store, "\u0736"); // ܶ
+            int existing = sizeObj instanceof Number ? ((Number) sizeObj).intValue() : -1;
+            android.util.Log.i("MtTools", "feedFlatIndex: store size=" + existing);
+            if (existing > 0) return 0;
+
+            File dir = new File("/storage/emulated/0");
+            if (!dir.isDirectory()) return -1;
+            File[] children = dir.listFiles();
+            if (children == null) return -1;
+
+            // store.۟(String, [l/᩶ܳܶ;)Ll/᩺ܶܶ — add item by name
+            java.lang.reflect.Method add = findMethod(store.getClass(), "\u06df"); // ۟
+            if (add == null) { android.util.Log.i("MtTools", "feedFlatIndex: no add method"); return -1; }
+            int added = 0;
+            for (File f : children) {
+                try {
+                    add.invoke(store, f.getName(), null);
+                    added++;
+                } catch (Throwable ignored) { }
+            }
+            android.util.Log.i("MtTools", "feedFlatIndex: added " + added + " items to store");
+            return added;
+        } catch (Throwable t) {
+            android.util.Log.e("MtTools", "feedFlatIndex failed", t);
+            return -1;
+        }
+    }
+
+    /** Finds a field by name, walking superclasses. */
+    private static java.lang.reflect.Field findField(Class<?> cls, String name) {
+        Class<?> c = cls;
+        while (c != null) {
+            try {
+                java.lang.reflect.Field f = c.getDeclaredField(name);
+                f.setAccessible(true);
+                return f;
+            } catch (NoSuchFieldException e) {
+                c = c.getSuperclass();
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /** Invokes a no-arg method returning Object, walking superclasses. */
+    private static Object callNoArg(Object target, String name) {
+        Class<?> c = target.getClass();
+        while (c != null) {
+            try {
+                for (java.lang.reflect.Method m : c.getDeclaredMethods()) {
+                    if (m.getName().equals(name) && m.getParameterTypes().length == 0) {
+                        m.setAccessible(true);
+                        return m.invoke(target);
+                    }
+                }
+            } catch (Exception e) {
+                return null;
+            }
+            c = c.getSuperclass();
+        }
+        return null;
+    }
+
+    /** Finds a method by name with one String + array-or-null second param. */
+    private static java.lang.reflect.Method findMethod(Class<?> cls, String name) {
+        Class<?> c = cls;
+        while (c != null) {
+            for (java.lang.reflect.Method m : c.getDeclaredMethods()) {
+                if (m.getName().equals(name) && m.getParameterTypes().length == 2) {
+                    m.setAccessible(true);
+                    return m;
+                }
+            }
+            c = c.getSuperclass();
+        }
+        return null;
+    }
+
     /** Finds a method with a single boolean param. */    private static java.lang.reflect.Method findMethod(Class<?> cls, Class<?> retType) {
         for (java.lang.reflect.Method m : cls.getDeclaredMethods()) {
             if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == boolean.class) {
