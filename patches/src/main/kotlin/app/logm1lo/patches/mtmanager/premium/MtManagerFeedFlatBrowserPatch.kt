@@ -1,7 +1,7 @@
 package app.logm1lo.patches.mtmanager.premium
 
 import app.logm1lo.patches.shared.COMPATIBILITY_MTMANAGER
-import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
+import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.patch.bytecodePatch
 
 /**
@@ -12,6 +12,12 @@ import app.morphe.patcher.patch.bytecodePatch
  * (l/֡ۨܶ.ܳ -> l/ᩴܿ᩶ -> l/ۚܶܶ store) which is NOT rebuilt on splice builds
  * (stale "Android" placeholder rows). The extension helper populates the store
  * with real file entries via reflection.
+ *
+ * INJECTION APPROACH (v2): direct `invoke-static` to MtTools, NOT reflection.
+ * The v1 reflection chain used a scratch register (v3) that collides with the
+ * `this` parameter register (p0 = v3) in onCreate's .registers 5 layout,
+ * clobbering `this` to null. A direct static call uses only p0 (arg) + v0
+ * (move-result), with zero register collision.
  *
  * Splice-safe: pure Java injection, no native methods touched.
  * Pairs with removing the slide-panel patches so the app shows the stock
@@ -34,34 +40,13 @@ val mtmanagerFeedFlatBrowserPatch = bytecodePatch(
         } ?: return@execute
         val impl = onCreate.implementation ?: return@execute
 
-        // Inject the reflection feed call at position 1 (right after the initial
-        // invoke-super). addInstructionsWithLabels performs register allocation,
-        // so the smali can reference p0/p1 and arbitrary v-registers safely.
-        val smali = """
-            invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
-            move-result-object v0
-            invoke-virtual {v0}, Ljava/lang/Class;->getClassLoader()Ljava/lang/ClassLoader;
-            move-result-object v0
-            const-string v1, "app.morphe.extension.mtmanager.MtTools"
-            const/4 v2, 0x1
-            invoke-static {v1, v2, v0}, Ljava/lang/Class;->forName(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;
-            move-result-object v0
-            const/4 v2, 0x1
-            new-array v1, v2, [Ljava/lang/Class;
-            const-class v2, Ljava/lang/Object;
-            const/4 v3, 0x0
-            aput-object v2, v1, v3
-            const-string v2, "feedFlatIndex"
-            invoke-virtual {v0, v2, v1}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
-            move-result-object v0
-            const/4 v2, 0x1
-            new-array v1, v2, [Ljava/lang/Object;
-            const/4 v2, 0x0
-            aput-object p0, v1, v2
-            const/4 v2, 0x0
-            invoke-virtual {v0, v2, v1}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
-        """.trimIndent()
-        onCreate.addInstructionsWithLabels(1, smali)
-        println("MT Manager: injected feedFlatIndex into l/ܰۨܶ.onCreate")
+        // Inject a DIRECT static call to MtTools.feedFlatIndex(this) at position
+        // 1 (right after invoke-super). feedFlatIndex(Object) returns int, so we
+        // consume it with move-result v0. Direct reference resolves because the
+        // MtTools extension is merged into the same dex (classes7) as this class.
+        onCreate.addInstruction(1, "invoke-static {p0}, Lapp/morphe/extension/mtmanager/MtTools;->feedFlatIndex(Ljava/lang/Object;)I")
+        onCreate.addInstruction(2, "move-result v0")
+
+        println("MT Manager: injected feedFlatIndex direct call into l/ܰۨܶ.onCreate")
     }
 }
