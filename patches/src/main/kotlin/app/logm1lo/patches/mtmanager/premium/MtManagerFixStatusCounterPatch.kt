@@ -50,10 +50,6 @@ val mtmanagerFixStatusCounterPatch = bytecodePatch(
         // Compile the new body as smali text. Non-static 0-param:
         // .registers 12 -> p0 (this) = v11; scratch v0..v10.
         val smali = buildString {
-            // Diagnostic log: confirm ᩷() is called
-            append("const-string v0, \"MtTools\"\n")
-            append("const-string v1, \"MT-DEBUG: l.ۤۚܳ.᩷() called\"\n")
-            append("invoke-static {v0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I\n")
             // Always feed via MtTools (skip this.֡۟ warm-state shortcut — it can
             // hold stale native placeholder items "Android" x42 that never get
             // replaced, so the file-browser ListView would keep showing them).
@@ -64,12 +60,6 @@ val mtmanagerFixStatusCounterPatch = bytecodePatch(
             append("invoke-virtual {v3}, Ll/\u1a76\u05a8\u0733;->\u1a75()Ljava/lang/String;\n")
             append("move-result-object v0\n")
             append("if-eqz v0, :empty\n")
-            // Diagnostic: log resolved path (v0 = path)
-            append("const-string v1, \"MtTools\"\n")
-            append("const-string v2, \"MT-DEBUG: ᩷() path=\"\n")
-            append("invoke-virtual {v2, v0}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;\n")
-            append("move-result-object v2\n")
-            append("invoke-static {v1, v2}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I\n")
             // 2) reflection: MtTools.feedStatusItems(path)
             append("move-object v6, v11\n")
             append("invoke-virtual {v6}, Ljava/lang/Object;->getClass()Ljava/lang/Class;\n")
@@ -130,14 +120,6 @@ val mtmanagerFixStatusCounterPatch = bytecodePatch(
         if (itemMethod != null) {
             println("MT Manager: l.ۤۚܳ.۟(I) item getter found, params=" + itemMethod.parameterTypes)
             val itemSmali = buildString {
-                // Diagnostic log: confirm ۟(I) is called (use v0..v5 free locals only)
-                append("const-string v0, \"MtTools\"\n")
-                append("const-string v1, \"MT-DEBUG: ۟(I) ENTER p1=\"\n")
-                append("invoke-static {p1}, Ljava/lang/String;->valueOf(I)Ljava/lang/String;\n")
-                append("move-result-object v2\n")
-                append("invoke-virtual {v1, v2}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;\n")
-                append("move-result-object v2\n")
-                append("invoke-static {v0, v2}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I\n")
                 // Save the index param (p1) into a free local v5 — the reflection
                 // below needs a scratch constant for array indices and would
                 // otherwise clobber p1 (which IS the index in .registers 8).
@@ -181,21 +163,6 @@ val mtmanagerFixStatusCounterPatch = bytecodePatch(
                 append("invoke-interface {v0, v5}, Ljava/util/List;->get(I)Ljava/lang/Object;\n")
                 append("move-result-object v0\n")
                 append("check-cast v0, Ll/\u1a76\u1a7a\u0733;\n")
-                // Diagnostic: log returned item toString + index
-                append("const-string v1, \"MtTools\"\n")
-                append("const-string v2, \"MT-DEBUG: ۟(I) idx=\"\n")
-                append("invoke-static {v5}, Ljava/lang/String;->valueOf(I)Ljava/lang/String;\n")
-                append("move-result-object v3\n")
-                append("invoke-virtual {v2, v3}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;\n")
-                append("move-result-object v3\n")
-                append("const-string v2, \" item=\"\n")
-                append("invoke-virtual {v3, v2}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;\n")
-                append("move-result-object v3\n")
-                append("invoke-virtual {v0}, Ljava/lang/Object;->toString()Ljava/lang/String;\n")
-                append("move-result-object v2\n")
-                append("invoke-virtual {v3, v2}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;\n")
-                append("move-result-object v3\n")
-                append("invoke-static {v1, v3}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I\n")
                 append("return-object v0\n")
                 // 2) :null -> return null
                 append(":null\n")

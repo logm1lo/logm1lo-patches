@@ -449,7 +449,6 @@ public final class MtTools {
             // Return the cached list so the adapter sees a stable count.
             java.util.List<Object> cached = statusItemsCache;
             if (cached != null) return cached;
-            android.util.Log.i("MtTools", "feedStatusItems called path=" + dirPath);
             ClassLoader cl = MtTools.class.getClassLoader();
             File dir = new File(dirPath != null && !dirPath.isEmpty() ? dirPath : "/storage/emulated/0");
             if (!dir.isDirectory()) return java.util.Collections.emptyList();
@@ -471,7 +470,6 @@ public final class MtTools {
                 } catch (Throwable ignored) { }
             }
             statusItemsCache = out;
-            android.util.Log.i("MtTools", "feedStatusItems returning " + out.size() + " items, first=" + (out.isEmpty() ? "none" : out.get(0)));
             return out;
         } catch (Throwable t) {
             android.util.Log.e("MtTools", "feedStatusItems failed", t);
@@ -498,16 +496,14 @@ public final class MtTools {
     @SuppressWarnings("unused")
     public static java.util.List<Object> feedFileItems(String dirPath) {
         try {
-            android.util.Log.i("MtTools", "feedFileItems called path=" + dirPath);
             ClassLoader cl = MtTools.class.getClassLoader();
             // Empty path (browser path field not yet populated at startup) -> default to internal storage root.
             File dir = new File(dirPath != null && !dirPath.isEmpty() ? dirPath : "/storage/emulated/0");
-            if (!dir.isDirectory()) { android.util.Log.i("MtTools", "feedFileItems NOT a dir"); return java.util.Collections.emptyList(); }
+            if (!dir.isDirectory()) return java.util.Collections.emptyList();
             File[] children = dir.listFiles();
-            if (children == null) { android.util.Log.i("MtTools", "feedFileItems listFiles null"); return java.util.Collections.emptyList(); }
+            if (children == null) return java.util.Collections.emptyList();
 
             Class<?> itemCls = Class.forName("l.\u073f\u06db\u0733", true, cl); // l/ܿۛܳ
-            android.util.Log.i("MtTools", "feedFileItems itemCls=" + itemCls + " children=" + children.length);
             java.lang.reflect.Constructor<?> ctor = itemCls.getConstructor(
                 String.class, String.class);
 
@@ -517,7 +513,6 @@ public final class MtTools {
                     out.add(ctor.newInstance(f.getName(), f.getAbsolutePath()));
                 } catch (Throwable ignored) { }
             }
-            android.util.Log.i("MtTools", "feedFileItems returning " + out.size() + " items");
             return out;
         } catch (Throwable t) {
             android.util.Log.e("MtTools", "feedFileItems failed", t);
