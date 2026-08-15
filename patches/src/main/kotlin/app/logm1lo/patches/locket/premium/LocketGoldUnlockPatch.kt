@@ -19,7 +19,7 @@ import app.morphe.patcher.patch.rawResourcePatch
  * entitlement (which is set server-side only after a real Play purchase).
  *
  * Patch: rewrite function `androidGoldSubscriptionOverride` (function ID 21520,
- * bytecode offset 0x53354A, 35 bytes) so its first instruction is
+ * bytecode offset 0x5336EA, 35 bytes) so its first instruction is
  * `LoadConstTrue r0; Ret r0`, forcing it to always return true. The remaining
  * bytes are padded with valid unreachable instructions (LoadConstUndefined /
  * LoadConstUInt8) so the function body stays the same length and every
