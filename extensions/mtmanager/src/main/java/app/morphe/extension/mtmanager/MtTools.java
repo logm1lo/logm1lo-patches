@@ -439,8 +439,16 @@ public final class MtTools {
      * @return a List of l/᩶᩺ܳ items (possibly empty), or null on failure
      */
     @SuppressWarnings("unused")
+    /** Cached feedStatusItems result — keeps the adapter count stable across
+     *  repeated getCount()/getItem() calls (a fresh list each call made the
+     *  ListView throw "adapter content changed without notification"). */
+    private static volatile java.util.List<Object> statusItemsCache = null;
+
     public static java.util.List<Object> feedStatusItems(String dirPath) {
         try {
+            // Return the cached list so the adapter sees a stable count.
+            java.util.List<Object> cached = statusItemsCache;
+            if (cached != null) return cached;
             android.util.Log.i("MtTools", "feedStatusItems called path=" + dirPath);
             ClassLoader cl = MtTools.class.getClassLoader();
             File dir = new File(dirPath != null && !dirPath.isEmpty() ? dirPath : "/storage/emulated/0");
@@ -462,7 +470,8 @@ public final class MtTools {
                     out.add(ctor.newInstance(name, path, "/", size, time, f.isDirectory()));
                 } catch (Throwable ignored) { }
             }
-            android.util.Log.i("MtTools", "feedStatusItems returning " + out.size() + " items");
+            statusItemsCache = out;
+            android.util.Log.i("MtTools", "feedStatusItems returning " + out.size() + " items, first=" + (out.isEmpty() ? "none" : out.get(0)));
             return out;
         } catch (Throwable t) {
             android.util.Log.e("MtTools", "feedStatusItems failed", t);
