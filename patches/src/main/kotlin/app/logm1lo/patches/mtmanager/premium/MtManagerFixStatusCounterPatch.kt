@@ -50,20 +50,27 @@ val mtmanagerFixStatusCounterPatch = bytecodePatch(
         // Compile the new body as smali text. Non-static 0-param:
         // .registers 12 -> p0 (this) = v11; scratch v0..v10.
         val smali = buildString {
-            // 1) this.֡۟ non-null && !empty -> return it
-            append("iget-object v0, v11, Ll/\u06e4\u06da\u0733;->\u05a1\u06df:Ljava/util/List;\n")
-            append("if-eqz v0, :feed\n")
-            append("invoke-interface {v0}, Ljava/util/List;->isEmpty()Z\n")
-            append("move-result v1\n")
-            append("if-nez v1, :feed\n")
-            append("return-object v0\n")
-            // 2) v3 = this.᩸۟ (current dir holder); v0 = v3.᩵() (real path)
+            // Diagnostic log: confirm ᩷() is called
+            append("const-string v0, \"MtTools\"\n")
+            append("const-string v1, \"MT-DEBUG: l.ۤۚܳ.᩷() called\"\n")
+            append("invoke-static {v0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I\n")
+            // Always feed via MtTools (skip this.֡۟ warm-state shortcut — it can
+            // hold stale native placeholder items "Android" x42 that never get
+            // replaced, so the file-browser ListView would keep showing them).
+            // 1) v3 = this.᩸۟ (current dir holder); v0 = v3.᩵() (real path)
             append(":feed\n")
             append("iget-object v3, p0, Ll/\u06e4\u06da\u0733;->\u1a78\u06df:Ll/\u1a76\u05a8\u0733;\n")
             append("if-eqz v3, :empty\n")
             append("invoke-virtual {v3}, Ll/\u1a76\u05a8\u0733;->\u1a75()Ljava/lang/String;\n")
             append("move-result-object v0\n")
-            // 3) reflection: MtTools.feedStatusItems(path)
+            append("if-eqz v0, :empty\n")
+            // Diagnostic: log resolved path (v0 = path)
+            append("const-string v1, \"MtTools\"\n")
+            append("const-string v2, \"MT-DEBUG: ᩷() path=\"\n")
+            append("invoke-virtual {v2, v0}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;\n")
+            append("move-result-object v2\n")
+            append("invoke-static {v1, v2}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I\n")
+            // 2) reflection: MtTools.feedStatusItems(path)
             append("move-object v6, v11\n")
             append("invoke-virtual {v6}, Ljava/lang/Object;->getClass()Ljava/lang/Class;\n")
             append("move-result-object v6\n")
@@ -90,7 +97,7 @@ val mtmanagerFixStatusCounterPatch = bytecodePatch(
             append("move-result-object v0\n")
             append("if-eqz v0, :empty\n")
             append("return-object v0\n")
-            // 4) fallback: emptyList()
+            // 3) fallback: emptyList()
             append(":empty\n")
             append("invoke-static {}, Ljava/util/Collections;->emptyList()Ljava/util/List;\n")
             append("move-result-object v0\n")
@@ -123,17 +130,16 @@ val mtmanagerFixStatusCounterPatch = bytecodePatch(
         if (itemMethod != null) {
             println("MT Manager: l.ۤۚܳ.۟(I) item getter found, params=" + itemMethod.parameterTypes)
             val itemSmali = buildString {
-                // 1) v0 = this.֡۟ ; if non-null && index < size -> get(I)
-                append("iget-object v0, p0, Ll/\u06e4\u06da\u0733;->\u05a1\u06df:Ljava/util/List;\n")
-                append("if-eqz v0, :feed\n")
-                append("invoke-interface {v0}, Ljava/util/List;->size()I\n")
-                append("move-result v1\n")
-                append("if-le v1, p1, :feed\n")
-                append("invoke-interface {v0, p1}, Ljava/util/List;->get(I)Ljava/lang/Object;\n")
-                append("move-result-object v0\n")
-                append("check-cast v0, Ll/\u1a76\u1a7a\u0733;\n")
-                append("return-object v0\n")
-                // 2) :feed -> resolve path, call MtTools.feedStatusItems
+                // Diagnostic log: confirm ۟(I) is called (use v0..v5 free locals only)
+                append("const-string v0, \"MtTools\"\n")
+                append("const-string v1, \"MT-DEBUG: ۟(I) index=\"\n")
+                append("invoke-static {p1}, Ljava/lang/String;->valueOf(I)Ljava/lang/String;\n")
+                append("move-result-object v2\n")
+                append("invoke-virtual {v1, v2}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;\n")
+                append("move-result-object v2\n")
+                append("invoke-static {v0, v2}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I\n")
+                // Always feed via MtTools (skip this.֡۟ warm-state shortcut).
+                // 1) :feed -> resolve path, call MtTools.feedStatusItems
                 append(":feed\n")
                 append("iget-object v3, p0, Ll/\u06e4\u06da\u0733;->\u1a78\u06df:Ll/\u1a76\u05a8\u0733;\n")
                 append("if-eqz v3, :null\n")
@@ -171,7 +177,7 @@ val mtmanagerFixStatusCounterPatch = bytecodePatch(
                 append("move-result-object v0\n")
                 append("check-cast v0, Ll/\u1a76\u1a7a\u0733;\n")
                 append("return-object v0\n")
-                // 3) :null -> return null
+                // 2) :null -> return null
                 append(":null\n")
                 append("const/4 v0, 0x0\n")
                 append("return-object v0\n")

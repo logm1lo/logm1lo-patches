@@ -441,6 +441,7 @@ public final class MtTools {
     @SuppressWarnings("unused")
     public static java.util.List<Object> feedStatusItems(String dirPath) {
         try {
+            android.util.Log.i("MtTools", "feedStatusItems called path=" + dirPath);
             ClassLoader cl = MtTools.class.getClassLoader();
             File dir = new File(dirPath != null && !dirPath.isEmpty() ? dirPath : "/storage/emulated/0");
             if (!dir.isDirectory()) return java.util.Collections.emptyList();
@@ -461,6 +462,7 @@ public final class MtTools {
                     out.add(ctor.newInstance(name, path, "/", size, time, f.isDirectory()));
                 } catch (Throwable ignored) { }
             }
+            android.util.Log.i("MtTools", "feedStatusItems returning " + out.size() + " items");
             return out;
         } catch (Throwable t) {
             android.util.Log.e("MtTools", "feedStatusItems failed", t);
