@@ -33,3 +33,13 @@ val COMPATIBILITY_MTMANAGER = Compatibility(
         AppTarget(version = "2.26.8"),
     )
 )
+
+val COMPATIBILITY_LOCKET = Compatibility(
+    name = "Locket",
+    packageName = "com.locket.Locket",
+    appIconColor = 0xF6C945,
+    apkFileType = ApkFileType.APKS,
+    targets = listOf(
+        AppTarget(version = "1.235.0"),
+    )
+)
