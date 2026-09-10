@@ -26,7 +26,7 @@ Install [Morphe Manager](https://github.com/MorpheApp/morphe-desktop/releases), 
 Re-signing the APK breaks Google Play Services auth. Sign in before patching, or use email/password instead of Google sign-in.
 
 **What versions are supported?**
-- Calistree: 5.8.5
+- Calistree: 5.8.5, 5.9.1
 - Cube Solver: 5.0.3
 
 Other versions may work but aren't tested.
