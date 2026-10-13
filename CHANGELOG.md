@@ -1,3 +1,9 @@
+## [1.3.0](https://github.com/logm1lo/logm1lo-patches/compare/v1.2.0...v1.3.0) (2026-10-13)
+
+### New Features
+
+* **calistree:** add 5.10.3 support ([086fc77](https://github.com/logm1lo/logm1lo-patches/commit/086fc7760fae003bac4cc935ac7e1f419a66992b))
+
 ## [1.3.0-dev.1](https://github.com/logm1lo/logm1lo-patches/compare/v1.2.0...v1.3.0-dev.1) (2026-10-13)
 
 ### New Features
