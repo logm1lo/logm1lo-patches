@@ -157,6 +157,18 @@ val calistreeDartHexPatch = rawResourcePatch(
                 0x22cb95c to ("e20316aa" to "c2820091"), // StateNotifier init → true
                 0x252a948 to ("8b040054" to "24000014"), // Plan limits → unlimited
             ),
+            "5.10.3" to mapOf(
+                0x2471250 to ("e00302aa" to "60830091"), // updateState setHasProAccess param → true
+                0x247127c to ("a2035ff8" to "62830091"), // updateState state= → true
+                0x23f15ac to ("c0c20091" to "c0820091"), // hasProAccess default → true
+                0x23f15b4 to ("e00301aa" to "c0820091"), // hasProAccess cached → true
+                0x254caf8 to ("e20303aa" to "e2830091"), // init() setHasProAccess → true
+                0x2f1ce50 to ("c0c20091" to "c0820091"), // Promotional check → true
+                0x27bb2b0 to ("40000054" to "10000014"), // Plan limit null gate → skip
+                0x254c8a4 to ("01012037" to "1f2003d5"), // backup skip gate → NOP
+                0x254c848 to ("e20316aa" to "c2820091"), // StateNotifier init → true
+                0x27bb2fc to ("8b040054" to "24000014"), // Plan limits → unlimited
+            ),
         )
 
         val soPath = "lib/arm64-v8a/libapp.so"

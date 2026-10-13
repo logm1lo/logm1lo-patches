@@ -12,6 +12,7 @@ val COMPATIBILITY_CALISTREE = Compatibility(
     targets = listOf(
         AppTarget(version = "5.8.5"),
         AppTarget(version = "5.9.1"),
+        AppTarget(version = "5.10.3"),
     )
 )
 
