@@ -1,7 +1,7 @@
 [versions]
 morphe-patcher = "1.7.0"
 smali = "d92701d947"
-gson = "2.14.0"
+gson = "2.15.0"
 dex2jar = "2.4.28"
 apksig = "8.9.1"
 
